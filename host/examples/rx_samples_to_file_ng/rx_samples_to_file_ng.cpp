@@ -209,7 +209,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
     uhd::set_thread_priority_safe();
 
     //variables to be set by po
-    std::string args, file, type, ant, subdev, ref, wirefmt;
+    std::string args, file, type, ant, subdev, ref, wirefmt, time_source;
     size_t total_num_samps, spb;
     double rate, freq, gain, bw, total_time, setup_time;
 
@@ -233,6 +233,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
         ("ref", po::value<std::string>(&ref)->default_value("internal"), "reference source (internal, external, mimo)")
         ("wirefmt", po::value<std::string>(&wirefmt)->default_value("sc16"), "wire format (sc8 or sc16)")
         ("setup", po::value<double>(&setup_time)->default_value(1.0), "seconds of setup time")
+        ("time_source", po::value<std::string>(&time_source)->default_value(""), "the time source (gpsdo, external) or blank for default")
         ("progress", "periodically display short-term bandwidth")
         ("stats", "show average bandwidth on exit")
         ("sizemap", "track packet size and display breakdown on exit")
@@ -276,6 +277,9 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
     if (vm.count("subdev")) usrp->set_rx_subdev_spec(subdev);
 
     std::cout << boost::format("Using Device: %s") % usrp->get_pp_string() << std::endl;
+
+    //set time source if specified
+    if (not time_source.empty()) usrp->set_time_source(time_source);
 
     //set the sample rate
     if (rate <= 0.0){
