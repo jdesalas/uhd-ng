@@ -65,8 +65,8 @@ template<typename samp_type> void recv_to_file(
         uhd::stream_cmd_t::STREAM_MODE_NUM_SAMPS_AND_DONE
     );
     stream_cmd.num_samps = size_t(num_requested_samples);
-    stream_cmd.stream_now = true;
-    stream_cmd.time_spec = uhd::time_spec_t();
+    stream_cmd.stream_now = false; // JdS: set to false, true is the default in the constructor
+    stream_cmd.time_spec = uhd::time_spec_t(5.0); // JdS: start streaming at exactly 5s
     rx_stream->issue_stream_cmd(stream_cmd);
 
     boost::system_time start = boost::get_system_time();
@@ -233,7 +233,7 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
         ("ref", po::value<std::string>(&ref)->default_value("internal"), "reference source (internal, external, mimo)")
         ("wirefmt", po::value<std::string>(&wirefmt)->default_value("sc16"), "wire format (sc8 or sc16)")
         ("setup", po::value<double>(&setup_time)->default_value(1.0), "seconds of setup time")
-        ("time_source", po::value<std::string>(&time_source)->default_value(""), "the time source (gpsdo, external) or blank for default")
+        ("time_source", po::value<std::string>(&time_source)->default_value(""), "time source (gpsdo, external) or blank for default")
         ("progress", "periodically display short-term bandwidth")
         ("stats", "show average bandwidth on exit")
         ("sizemap", "track packet size and display breakdown on exit")
@@ -280,6 +280,11 @@ int UHD_SAFE_MAIN(int argc, char *argv[]){
 
     //set time source if specified
     if (not time_source.empty()) usrp->set_time_source(time_source);
+    
+    //set the time at an unknown pps (will throw if no pps)
+    std::cout << std::endl << "Attempt to detect the PPS and set the time..." << std::endl << std::endl;
+    usrp->set_time_unknown_pps(uhd::time_spec_t(0.0));
+    std::cout << std::endl << "PPS set time success!" << std::endl << std::endl;
 
     //set the sample rate
     if (rate <= 0.0){
